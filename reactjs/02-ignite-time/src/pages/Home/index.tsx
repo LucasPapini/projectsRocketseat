@@ -1,4 +1,4 @@
-import { Play } from 'phosphor-react'
+import { HandPalm, Play } from 'phosphor-react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as zod from 'zod'
 import {
@@ -8,6 +8,7 @@ import {
   MinutesAmountInput,
   Separater,
   StartCountdownButton,
+  StopCountdownButton,
   TaskInput,
 } from './styles'
 import { useForm } from 'react-hook-form'
@@ -22,11 +23,6 @@ const newCycleFormValidationSchema = zod.object({
     .max(60, 'O ciclo presisa ser de no máximo 60 minutos'),
 })
 
-// interface NewCycleFormData {
-//  task: string
-//  minutesAmount: number
-// }
-
 type NewCycleFormData = zod.infer<typeof newCycleFormValidationSchema>
 
 interface Cycle {
@@ -34,6 +30,7 @@ interface Cycle {
   task: string
   minutesAnout: number
   startDate: Date
+  interruptDate?: Date
 }
 
 export function Home() {
@@ -61,6 +58,19 @@ export function Home() {
     setActiveCycleId(id)
     setAmountSecondsPassed(0)
     reset()
+  }
+
+  function handleInterruptCycle() {
+    setCycles(
+      cycles.map((cycle) => {
+        if (cycle.id === activeCyclceId) {
+          return { ...cycle, interruptDate: new Date() }
+        } else {
+          return cycle
+        }
+      }),
+    )
+    setActiveCycleId(null)
   }
 
   const activeCycle = cycles.find((cycle) => cycle.id === activeCyclceId)
@@ -97,6 +107,7 @@ export function Home() {
 
   const task = watch('task')
   const isSubmitDisabled = !task
+  console.log(cycles)
 
   return (
     <HomeContainer>
@@ -108,6 +119,7 @@ export function Home() {
             id="task"
             list="task-suggestion"
             placeholder="De um nome para op seu projeto..."
+            disabled={!!activeCycle}
             {...register('task')}
           />
 
@@ -126,6 +138,7 @@ export function Home() {
             step={5}
             min={5}
             max={60}
+            disabled={!!activeCycle}
             {...register('minutesAmount', { valueAsNumber: true })}
           />
           <span>minutos,</span>
@@ -139,10 +152,17 @@ export function Home() {
           <span>{seconds[1]}</span>
         </CountdonwContainer>
 
-        <StartCountdownButton disabled={isSubmitDisabled} type="submit">
-          <Play size={25} />
-          Começar
-        </StartCountdownButton>
+        {activeCyclceId ? (
+          <StopCountdownButton type="button" onClick={handleInterruptCycle}>
+            <HandPalm size={25} />
+            Interromper
+          </StopCountdownButton>
+        ) : (
+          <StartCountdownButton disabled={isSubmitDisabled} type="submit">
+            <Play size={25} />
+            Começar
+          </StartCountdownButton>
+        )}
       </form>
     </HomeContainer>
   )
